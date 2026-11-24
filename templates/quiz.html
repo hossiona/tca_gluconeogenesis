@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Molecular Biology Quiz</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f9; margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .quiz-container { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
+        h2 { color: #333; margin-top: 0; margin-bottom: 15px; }
+        .progress { color: #666; font-size: 0.9em; margin-bottom: 20px; display: flex; justify-content: space-between; }
+        .option-label { display: block; background: #f8f9fa; border: 2px solid #e9ecef; border-radius: 6px; padding: 15px; margin-bottom: 12px; cursor: pointer; transition: all 0.2s ease; }
+        .option-label:hover { background: #e8f4fd; border-color: #bee5eb; }
+        .option-label input { margin-right: 15px; transform: scale(1.2); }
+        
+        /* Diagram Container Layout Rules */
+        .quiz-image-container { text-align: center; margin: 15px 0 25px 0; padding: 10px; background: #fafafa; border: 1px dashed #ddd; border-radius: 6px; }
+        .quiz-diagram { max-width: 100%; height: auto; border-radius: 4px; box-shadow: 0 2px 6px rgba(0,0,0,0.05); }
+
+        .alert { padding: 15px; border-radius: 6px; margin-bottom: 20px; font-weight: bold; text-align: center; }
+        .alert-success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .alert-danger { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        
+        .nav-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn { display: inline-block; color: white; border: none; padding: 12px 24px; font-size: 1em; border-radius: 6px; cursor: pointer; text-decoration: none; text-align: center; flex: 1; }
+        .btn-submit { background: #007bff; }
+        .btn-submit:hover { background: #0056b3; }
+        .btn-next { background: #28a745; }
+        .btn-next:hover { background: #218838; }
+        .btn-back { background: #6c757d; }
+        .btn-back:hover { background: #5a6268; }
+        
+        .results-score { font-size: 2em; font-weight: bold; color: #28a745; text-align: center; margin: 20px 0; }
+        .disabled { pointer-events: none; opacity: 0.7; }
+    </style>
+</head>
+<body>
+
+<div class="quiz-container">
+    {% if view == 'question' %}
+        <div class="progress">
+            <span>Question {{ q_num }} of {{ total }}</span>
+        </div>
+        <h2>{{ question }}</h2>
+        
+        <!-- Renders the diagram under the question text if an image file is available -->
+        {% if image_url %}
+            <div class="quiz-image-container">
+                <img src="{{ url_for('static', filename='images/' + image_url) }}" alt="Quiz Diagram" class="quiz-diagram">
+            </div>
+        {% endif %}
+        
+        {% if history %}
+            {% if history.correct %}
+                <div class="alert alert-success">✓ Correct Answer!</div>
+            {% else %}
+                <div class="alert alert-danger">✗ Incorrect Answer. Try again or click Next.</div>
+            {% endif %}
+        {% endif %}
+        
+        <form method="POST" action="{{ url_for('quiz') }}">
+            <div class="{% if history and history.correct %}disabled{% endif %}">
+                {% for option in options %}
+                    <label class="option-label">
+                        <input type="radio" name="option" value="{{ option.orig_idx }}" required
+                               {% if history and history.selected == option.orig_idx %}checked{% endif %}>
+                        {{ option.text }}
+                    </label>
+                {% endfor %}
+            </div>
+            
+            <div class="nav-actions">
+                {% if show_back %}
+                    <button type="submit" name="action" value="back" class="btn btn-back" formnovalidate>Back</button>
+                {% endif %}
+                
+                {% if not history or not history.correct %}
+                    <button type="submit" name="action" value="submit" class="btn btn-submit">Submit Answer</button>
+                {% endif %}
+                
+                {% if history %}
+                    <button type="submit" name="action" value="next" class="btn btn-next" formnovalidate>Next</button>
+                {% endif %}
+            </div>
+        </form>
+
+    {% elif view == 'results' %}
+        <h2>Quiz Completed!</h2>
+        <p>Your final score is:</p>
+        <div class="results-score">{{ score }} / {{ total }}</div>
+        <a href="{{ url_for('index') }}" class="btn btn-submit" style="display: block;">Restart Quiz</a>
+
+    {% elif view == 'empty' %}
+        <h2>No Questions Available</h2>
+        <p>There are currently no questions seeded in the database.</p>
+    {% endif %}
+</div>
+
+</body>
+</html>
+
+
